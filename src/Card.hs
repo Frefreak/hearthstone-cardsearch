@@ -8,18 +8,14 @@ import Control.Lens
 import qualified Data.Text as T
 import qualified Data.Set as S
 
-data Mechanic = Battlecry   | CardDrawEffect    | Charge    | ChooseOne
-              | Combo   | CopyEffect    | DealDamage    | Deathrattle
-              | DestroyEffect   | DiscardEffect | DivineShield  | Elusive
-              | Enrage  | Equip | Forgetful | Freeze    | GenerateEffect
-              | Immune  | Inspire   | Joust | MindControlEffect | Overload
-              | Poison  | RestoreHealth | ReturnEffect  | Secret
-              | ShuffleIntoDeck | Silence | SpellDamage | Stealth
-              | Summon  | Taunt | TakeControl   | Transform
-              | TriggeredEffect | Windfury
+data Mechanic = Mechanic T.Text
               deriving (Show, Ord, Eq)
 
-data CardSet = CardSet T.Text -- TODO
+data CardSet = Classic
+        | GoblinsVsGnomes | TheGrandTournament
+        | WhispersOfTheOld | MeanStreetsOfGadgetzan
+        | CurseOfNaxxramas | BlackrockMountain | TheLeagueOfExplorers
+        | OneNightInKarazhan
     deriving (Show, Eq)
 
 -- to avoid name collision with `Mechanic`, `CT` is prepended here
@@ -36,8 +32,8 @@ newtype CardCost = CardCost Int deriving Show
 newtype CardAttack = CardAttack Int deriving Show
 newtype CardHealth = CardHealth Int deriving Show
 
-data Tag = Tag T.Text -- TODO
-    deriving (Show, Eq)
+data Tag = Tag T.Text
+    deriving (Show, Ord, Eq)
 
 data CardClass = Druid | Hunter | Mage | Paladin | Priest | Rogue | Shaman
                | Warlock | Warrior
@@ -63,15 +59,17 @@ makeLenses ''Card
 deathWing :: Card
 deathWing = Card
     "Deathwing"
-    (CardSet "Expert")
+    Classic
     CTMinion
     (Just Dragon)
     Legendary
     (CardCost 10)
     (CardAttack 12)
     (CardHealth 12)
-    (S.fromList [Battlecry, DestroyEffect, DiscardEffect])
+    (S.fromList
+        [Mechanic "Battlecry", Mechanic "Destroy", Mechanic "Discard"])
     S.empty
     "Card Desc"
     "Card Flavor"
     Nothing
+

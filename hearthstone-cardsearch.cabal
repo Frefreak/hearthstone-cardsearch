@@ -30,7 +30,7 @@ executable cardsearch
                      , hearthstone-cardsearch
   default-language:    Haskell2010
 
-test-suite cardsearch
+test-suite cardsearch-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
