@@ -15,7 +15,19 @@
 # resolver:
 #  name: custom-snapshot
 #  location: "./custom-snapshot.yaml"
+
 resolver: lts-7.5
+compiler: ghcjs-0.2.1.9007005_ghc-8.0.1
+compiler-check: match-exact
+
+allow-newer: true
+
+setup-info:
+  ghcjs:
+    source:
+      ghcjs-0.2.1.9007005_ghc-8.0.1:
+          url: http://ghcjs.tolysz.org/ghc-8.0-2016-10-24-lts-7.5-9007005.tar.gz
+          sha1: 450e81028d7f1eb82a16bc4b0809f30730c3e173
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -37,10 +49,13 @@ resolver: lts-7.5
 # will not be run. This is useful for tweaking upstream packages.
 packages:
 - '.'
-
 # Dependency packages to be pulled from upstream that are not in the resolver
 # (e.g., acme-missiles-0.3)
-extra-deps: []
+extra-deps:
+- reflex-0.4.0
+- reflex-dom-0.3
+- ghcjs-dom-0.2.3.1
+- ref-tf-0.4
 
 # Override default flag values for local packages and extra-deps
 flags: {}

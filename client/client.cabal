@@ -1,8 +1,8 @@
-name:                hearthstone-cardsearch
+name:                client
 version:             0.1.0.0
 synopsis:            Initial project template from stack
 description:         Please see README.md
-homepage:            https://github.com/Frefreak/hearthstone-cardsearch#readme
+homepage:            https://github.com/Frefreak/client#readme
 license:             BSD3
 license-file:        LICENSE
 author:              Xiangyu Zhu
@@ -16,43 +16,37 @@ cabal-version:       >=1.10
 library
   hs-source-dirs:      src
   exposed-modules:     Card
-                     , Parser
-                     , Generator
+                     , Filter
+                     , Summary
   build-depends:       base >= 4.7 && < 5
-                     , text
+                     , reflex-dom
                      , lens
-                     , containers
-                     , html-conduit
-                     , xml-conduit
-                     , wreq
-                     , lens-aeson
-                     , async
-                     , SafeSemaphore
-                     , aeson
-                     , bytestring
                      , deepseq
-                     , parallel
+                     , aeson
+                     , text
+                     , containers
+                     , bytestring
   default-language:    Haskell2010
 
-executable cardsearch-gen
+executable client
   hs-source-dirs:      app
-  main-is:             Gen.hs
+  main-is:             Main.hs
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   build-depends:       base
-                     , hearthstone-cardsearch
-                     , bytestring
-                     , aeson
+                     , client
+                     , reflex-dom
+                     , ghcjs-dom
   default-language:    Haskell2010
 
-test-suite cardsearch-test
+test-suite client-test
   type:                exitcode-stdio-1.0
   hs-source-dirs:      test
   main-is:             Spec.hs
   build-depends:       base
-                     , hearthstone-cardsearch
+                     , client
   ghc-options:         -threaded -rtsopts -with-rtsopts=-N
   default-language:    Haskell2010
 
 source-repository head
   type:     git
-  location: https://github.com/Frefreak/hearthstone-cardsearch
+  location: https://github.com/Frefreak/client
