@@ -86,9 +86,9 @@ text2CardRarity "Legendary" = Legendary
 text2CardRarity "Free" = Free
 text2CardRarity "" = Free
 
-newtype CardCost = CardCost Int deriving (Show, Generic)
-newtype CardAttack = CardAttack Int deriving (Show, Generic)
-newtype CardHealth = CardHealth Int deriving (Show, Generic)
+newtype CardCost = CardCost Int deriving (Show, Generic, Eq, Ord)
+newtype CardAttack = CardAttack Int deriving (Show, Generic, Eq, Ord)
+newtype CardHealth = CardHealth Int deriving (Show, Generic, Eq, Ord)
 
 text2CardCost :: T.Text -> CardCost
 text2CardCost = CardCost . read . T.unpack
