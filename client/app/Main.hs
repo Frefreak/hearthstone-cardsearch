@@ -1,4 +1,7 @@
 module Main where
 
+import Reflex.Dom
+import Widget
+
 main :: IO ()
-main = undefined
+main = mainWidget topWidget

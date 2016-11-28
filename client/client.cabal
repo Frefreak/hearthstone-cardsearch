@@ -18,6 +18,8 @@ library
   exposed-modules:     Card
                      , Filter
                      , Summary
+                     , Widget
+                     , JavaScript.JQuery
   build-depends:       base >= 4.7 && < 5
                      , reflex-dom
                      , lens
@@ -26,6 +28,9 @@ library
                      , text
                      , containers
                      , bytestring
+                     , data-default
+                     , ghcjs-base
+                     , ghcjs-dom
   default-language:    Haskell2010
 
 executable client

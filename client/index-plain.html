@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset='utf-8'>
+    <title>HearthStone CardSearch</title>
+    <!-- Compiled and minified CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/css/materialize.min.css">
+    <script
+                           src="https://code.jquery.com/jquery-3.1.1.min.js"
+                           integrity="sha256-hVVnYaiADRTO2PzUGmuLJr8BLUSjGIZsDYGmIJLv2b8="
+                           crossorigin="anonymous"></script>
+    <!-- Compiled and minified JavaScript -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.8/js/materialize.min.js" defer></script>
+  </head>
+  <body>
+
+    <div class="container">
+      <div class="row">
+        <form class="col s9">
+
+          <div class="input-field col s4">
+            <input type="text">
+            <label for="cardname">Card Name</label>
+          </div>
+
+          <div class="input-field col s4">
+            <input type="text">
+            <label for="carddesc">Card Description</label>
+          </div>
+
+          <div class="input-field col s4">
+            <input type="text">
+            <label for="cardflavor">Card Flavor Text</label>
+          </div>
+
+          <div class="input-field col s7">
+            <select multiple id="cardset">
+              <option value="" disabled selected>None</option>
+              <option value="Naxx">Naxxramas</option>
+              <option value="Karazhan">One Night in Karazhan</option>
+              <option value="gadgetzan">Mean Streets Of Gadgetzan</option>
+            </select>
+            <label>Card Set</label>
+          </div>
+
+          <div class="input-field col s4 offset-s1">
+            <select multiple>
+              <option value="" disabled selected>None</option>
+              <option value="Minion">Minion</option>
+              <option value="Spell">Spell</option>
+            </select>
+            <label>Card Type</label>
+          </div>
+
+          <div class="input-field col s3">
+            <select multiple>
+              <option value="" disabled selected>None</option>
+              <option value="Epic">Epic</option>
+              <option value="Legendary">Legendary</option>
+            </select>
+            <label>Card Rarity</label>
+          </div>
+
+          <div class="input-field col s3 offset-s1">
+            <select multiple>
+              <option value="" disabled selected>None</option>
+              <option value="Mage">Mage</option>
+              <option value="Warlock">Warlock</option>
+              <option value="Priest">Priest</option>
+              <option value="Neutral">Neutral</option>
+            </select>
+            <label>Card Class</label>
+          </div>
+
+          <div class="input-field col s4 offset-s1">
+            <select multiple>
+              <option value="" disabled selected>None</option>
+              <option value="Beast">Beast</option>
+              <option value="Demon">Demon</option>
+              <option value="Dragon">Dragon</option>
+            </select>
+            <label>Card Subtype (Assume Minion)</label>
+          </div>
+
+          <div class="input-field col s4" id="cost">
+            <div class="col s5">
+              <input value="" type="number">
+              <label class="col s2">costl</label>
+            </div>
+            <div class="col s5 offset-s2">
+              <input value="" type="number">
+              <label class="col s2">costh</label>
+            </div>
+          </div>
+
+          <div class="input-field col s4" id="atk">
+            <div class="col s5">
+              <input value="" type="number">
+              <label class="col s2">attackl</label>
+            </div>
+            <div class="col s5 offset-s2">
+              <input value="" type="number">
+              <label class="col s2">attackh</label>
+            </div>
+          </div>
+
+          <div class="input-field col s4" id="health">
+            <div class="col s5">
+              <input value="" type="number">
+              <label class="col s2">healthl</label>
+            </div>
+            <div class="col s5 offset-s2">
+              <input value="" type="number">
+              <label class="col s2">healthh</label>
+            </div>
+          </div>
+
+          <div class="input-field col s12 inline">
+            <p class="grey-text">Abilities</p>
+            <div class="col s3">
+              <input type="checkbox" id="Battlecry">
+              <label for="Battlecry">Battery</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Deal damage">
+              <label for="Deal damage">Deal damage</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Destroy">
+              <label for="Destroy">Destroy</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Random">
+              <label for="Random">Random</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Battlecry">
+              <label for="Battlecry">Battery</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Deal damage">
+              <label for="Deal damage">Deal damage</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Destroy">
+              <label for="Destroy">Destroy</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Random">
+              <label for="Random">Random</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Battlecry">
+              <label for="Battlecry">Battery</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Deal damage">
+              <label for="Deal damage">Deal damage</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Destroy">
+              <label for="Destroy">Destroy</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Random">
+              <label for="Random">Random</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Battlecry">
+              <label for="Battlecry">Battery</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Deal damage">
+              <label for="Deal damage">Deal damage</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Destroy">
+              <label for="Destroy">Destroy</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Random">
+              <label for="Random">Random</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Battlecry">
+              <label for="Battlecry">Battery</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Deal damage">
+              <label for="Deal damage">Deal damage</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Destroy">
+              <label for="Destroy">Destroy</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Random">
+              <label for="Random">Random</label>
+            </div>
+          </div>
+
+          <div class="input-field col s12">
+            <p class="grey-text">Tags</p>
+            <div class="col s3">
+              <input type="checkbox" id="Damage-Related">
+              <label for="Damage-Related">Damage-Related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Spell-related">
+              <label for="Spell-related">Spell-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Triggered effest">
+              <label for="Triggered effest">Triggered effest</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Positional effect">
+              <label for="Positional effect">Positional effect</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Murloc-related">
+              <label for="Murloc-related">Murloc-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Murloc-related">
+              <label for="Murloc-related">Murloc-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Demon-related">
+              <label for="Demon-related">Demon-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Damage-Related">
+              <label for="Damage-Related">Damage-Related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Spell-related">
+              <label for="Spell-related">Spell-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Triggered effest">
+              <label for="Triggered effest">Triggered effest</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Positional effect">
+              <label for="Positional effect">Positional effect</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Murloc-related">
+              <label for="Murloc-related">Murloc-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Murloc-related">
+              <label for="Murloc-related">Murloc-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Demon-related">
+              <label for="Demon-related">Demon-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Damage-Related">
+              <label for="Damage-Related">Damage-Related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Spell-related">
+              <label for="Spell-related">Spell-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Triggered effest">
+              <label for="Triggered effest">Triggered effest</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Positional effect">
+              <label for="Positional effect">Positional effect</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Murloc-related">
+              <label for="Murloc-related">Murloc-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Murloc-related">
+              <label for="Murloc-related">Murloc-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Demon-related">
+              <label for="Demon-related">Demon-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Damage-Related">
+              <label for="Damage-Related">Damage-Related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Spell-related">
+              <label for="Spell-related">Spell-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Triggered effest">
+              <label for="Triggered effest">Triggered effest</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Positional effect">
+              <label for="Positional effect">Positional effect</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Murloc-related">
+              <label for="Murloc-related">Murloc-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Murloc-related">
+              <label for="Murloc-related">Murloc-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Demon-related">
+              <label for="Demon-related">Demon-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Damage-Related">
+              <label for="Damage-Related">Damage-Related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Spell-related">
+              <label for="Spell-related">Spell-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Triggered effest">
+              <label for="Triggered effest">Triggered effest</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Positional effect">
+              <label for="Positional effect">Positional effect</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Murloc-related">
+              <label for="Murloc-related">Murloc-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Murloc-related">
+              <label for="Murloc-related">Murloc-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Demon-related">
+              <label for="Demon-related">Demon-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Damage-Related">
+              <label for="Damage-Related">Damage-Related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Spell-related">
+              <label for="Spell-related">Spell-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Triggered effest">
+              <label for="Triggered effest">Triggered effest</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Positional effect">
+              <label for="Positional effect">Positional effect</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Murloc-related">
+              <label for="Murloc-related">Murloc-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Murloc-related">
+              <label for="Murloc-related">Murloc-related</label>
+            </div>
+            <div class="col s3">
+              <input type="checkbox" id="Demon-related">
+              <label for="Demon-related">Demon-related</label>
+            </div>
+          </div>
+
+        </form>
+        <div class="col s3">
+          <div class="pin-top">
+            <div class="collection">
+              <a href="#" class="collection-item">Deathwing</a>
+              <a href="#" class="collection-item">Murloc</a>
+              <a href="#" class="collection-item">Flamewaker</a>
+              <a href="#" class="collection-item">A super long name of an unknown creature</a>
+              <a href="#" class="collection-item">Flamewaker</a>
+              <a href="#" class="collection-item">Flamewaker</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+$(document).ready(function() {
+  $('select').material_select();
+  $('.pin-top').pushpin({
+    top:0
+  });
+  $('.scrollspy').scrollSpy();
+});
+
+    </script>
+  </body>
+</html>
