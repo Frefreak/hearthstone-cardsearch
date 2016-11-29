@@ -20,6 +20,7 @@ import Data.Aeson
 import qualified Data.ByteString.Lazy.UTF8 as U
 import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Data.Map as M
+import qualified Data.Set as S
 import Safe
 
 import Card hiding ((=:))
@@ -51,12 +52,23 @@ topWidget =
                 caw <- cardatkWidget
                 chw <- cardhpWidget
 
+                cards <- liftIO getCardData
+
+                let abis = cards ^.. traverse . cardAbilities
+                    tags = cards ^.. traverse . cardTags
+
+                aw <- abiWidget . S.toList $ S.unions abis
+                tw <- tagWidget . S.toList $ S.unions tags
+
                 -- debug VVVVVV
                 printOnChange "Card Name" nw
                 printOnChange "Card Description" dw
                 printOnChange "Card Flavor" fw
                 printOnChange "Card Set" sw
                 -- debug ^^^^^^
+
+                ev <- getPostBuild
+                performArg (const $ material_select >> initialize_multiple_select) ev
 
                 nF <- mapDyn nameRule nw
                 dF <- mapDyn descRule dw
@@ -68,9 +80,11 @@ topWidget =
                 ccF <- mapDyn cardcostRule ccw
                 caF <- mapDyn cardatkRule caw
                 chF <- mapDyn cardhpRule chw
+                aF <- mapDyn abiRule aw
+                tF <- mapDyn tagRule tw
 
-                cards <- liftIO getCardData
-                allFilter <- sequenceDyn [nF, dF, fF, sF, tF, rF, cF, ccF, caF, chF]
+                allFilter <- sequenceDyn
+                    [nF, dF, fF, sF, tF, rF, cF, ccF, caF, chF, aF, tF]
                 cards' <- mapDyn (\f -> applyAllFilter (concat f) cards) allFilter
 
                 let helper c = if length c > 5
@@ -108,6 +122,12 @@ cardatkRule c = [atkFilter c]
 
 cardhpRule :: (Int, Int) -> [Filter]
 cardhpRule c = [hpFilter c]
+
+abiRule :: [Mechanic] -> [Filter]
+abiRule m = [abiFilter m]
+
+tagRule :: [Tag] -> [Filter]
+tagRule t = [tagFilter t]
 
 sequenceDyn :: MonadWidget t m => [Dynamic t a] -> m (Dynamic t [a])
 sequenceDyn (a:as) = do
@@ -182,6 +202,16 @@ cardhpWidget =
     elAttr "div" ("class" =: "input-field col s4" <> "id" =: "health")
         $ rangeWidget "health"
 
+abiWidget :: MonadWidget t m => [Mechanic] -> m (Dynamic t [Mechanic])
+abiWidget ms = do
+    w <- checkboxWidget "Abilities" $ map (\(Mechanic s) -> T.unpack s) ms
+    mapDyn (map $ Mechanic . T.pack) w
+
+tagWidget :: MonadWidget t m => [Tag] -> m (Dynamic t [Tag])
+tagWidget ms = do
+    w <- checkboxWidget "Tags" $ map (\(Tag s) -> T.unpack s) ms
+    mapDyn (map $ Tag . T.pack) w
+
 nullAttr :: String -> M.Map String String
 nullAttr s = s =: ""
 
@@ -219,6 +249,20 @@ rangeWidget n = do
         return $ ti ^. textInput_value
     combineDyn (\a b -> (readDef 0 a, readDef 999 b)) mi ma
 
+-- widget used to render abilities and tags filter
+checkboxWidget :: MonadWidget t m => String -> [String] -> m (Dynamic t [String])
+checkboxWidget hdr strs =
+    divClass "input-field col s12" $ do
+        elAttr "p" ("class" =: "grey-text") $ text hdr
+        dyns <- forM strs $ \s ->
+            divClass "col l3 s4" $ do
+                cb <- checkbox False
+                    (def & checkboxConfig_attributes .~ constDyn ("id" =: s))
+                elAttr "label" ("for" =: s) $ text s
+                combineDyn (,) (cb ^. checkbox_value) (constDyn s)
+        bs <- sequenceDyn dyns
+        mapDyn (map snd . filter fst) bs
+
 getValue :: String -> IO String
 getValue s = do
     jq <- select $ S.pack s
@@ -229,6 +273,10 @@ foreign import javascript unsafe "$1.val().join(' ')"
     getListOfString :: JQuery -> IO S.JSString
 foreign import javascript unsafe "$r = cards;"
     _getCardData :: IO S.JSString
+foreign import javascript unsafe "$('select').material_select();"
+    material_select :: IO ()
+foreign import javascript unsafe "$('#cardset').on('change', function(e) { $('#cardset-ob').trigger('click'); }); $('#cardtype').on('change', function(e) { $('#cardtype-ob').trigger('click'); }); $('#cardrarity').on('change', function(e) { $('#cardrarity-ob').trigger('click'); }); $('#cardclass').on('change', function(e) { $('#cardclass-ob').trigger('click'); }); $('#cardsubtype').on('change', function(e) { $('#cardsubtype-ob').trigger('click'); });"
+    initialize_multiple_select :: IO ()
 
 getCardData :: IO [Card]
 getCardData = do
