@@ -20,6 +20,7 @@ import Data.Aeson
 import qualified Data.ByteString.Lazy.UTF8 as U
 import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Data.Map as M
+import Safe
 
 import Card hiding ((=:))
 import Filter
@@ -46,6 +47,9 @@ topWidget =
                 rw <- cardrarityWidget
                 cw <- cardclassWidget
                 suw <- cardsubtypeWidget
+                ccw <- cardcostWidget
+                caw <- cardatkWidget
+                chw <- cardhpWidget
 
                 -- debug VVVVVV
                 printOnChange "Card Name" nw
@@ -61,9 +65,12 @@ topWidget =
                 tF <- combineDyn cardtypeRule stw suw
                 rF <- mapDyn cardrarityRule rw
                 cF <- mapDyn cardclassRule cw
+                ccF <- mapDyn cardcostRule ccw
+                caF <- mapDyn cardatkRule caw
+                chF <- mapDyn cardhpRule chw
 
                 cards <- liftIO getCardData
-                allFilter <- sequenceDyn [nF, dF, fF, sF, tF, rF, cF]
+                allFilter <- sequenceDyn [nF, dF, fF, sF, tF, rF, cF, ccF, caF, chF]
                 cards' <- mapDyn (\f -> applyAllFilter (concat f) cards) allFilter
 
                 let helper c = if length c > 5
@@ -92,6 +99,15 @@ cardrarityRule rs = [rarityFilter rs]
 
 cardclassRule :: [CardClass] -> [Filter]
 cardclassRule cs = [classFilter cs]
+
+cardcostRule :: (Int, Int) -> [Filter]
+cardcostRule c = [costFilter c]
+
+cardatkRule :: (Int, Int) -> [Filter]
+cardatkRule c = [atkFilter c]
+
+cardhpRule :: (Int, Int) -> [Filter]
+cardhpRule c = [hpFilter c]
 
 sequenceDyn :: MonadWidget t m => [Dynamic t a] -> m (Dynamic t [a])
 sequenceDyn (a:as) = do
@@ -151,6 +167,21 @@ cardsubtypeWidget = do
             $ fmap show cardsubtypeMap
     mapDyn (map read . words) dyn
 
+cardcostWidget :: MonadWidget t m => m (Dynamic t (Int, Int))
+cardcostWidget =
+    elAttr "div" ("class" =: "input-field col s4" <> "id" =: "cost")
+        $ rangeWidget "cost"
+
+cardatkWidget :: MonadWidget t m => m (Dynamic t (Int, Int))
+cardatkWidget =
+    elAttr "div" ("class" =: "input-field col s4" <> "id" =: "attack")
+        $ rangeWidget "attack"
+
+cardhpWidget :: MonadWidget t m => m (Dynamic t (Int, Int))
+cardhpWidget =
+    elAttr "div" ("class" =: "input-field col s4" <> "id" =: "health")
+        $ rangeWidget "health"
+
 nullAttr :: String -> M.Map String String
 nullAttr s = s =: ""
 
@@ -172,6 +203,21 @@ multipleSelectWidget wid l opts = do
     let ev = domEvent Click el
     ev' <- performArg (const . getValue $ "#" ++ wid) ev
     holdDyn "" ev'
+
+-- a special two input widget of type `number`
+rangeWidget :: MonadWidget t m => String -> m (Dynamic t (Int, Int))
+rangeWidget n = do
+    mi <- divClass "col s5" $ do
+        elAttr "label" ("class" =: "col s6" <> "for" =: ("min" ++ n)) (text $ "min " ++ n)
+        ti <- textInput $ def & textInputConfig_inputType .~ "number"
+                        & textInputConfig_attributes .~ constDyn ("id" =: ("min" ++ n))
+        return $ ti ^. textInput_value
+    ma <- divClass "col s5 offset-s2" $ do
+        elAttr "label" ("class" =: "col s6") (text $ "max " ++ n)
+        ti <- textInput $ def & textInputConfig_inputType .~ "number"
+                        & textInputConfig_attributes .~ constDyn (nullAttr "value")
+        return $ ti ^. textInput_value
+    combineDyn (\a b -> (readDef 0 a, readDef 999 b)) mi ma
 
 getValue :: String -> IO String
 getValue s = do
