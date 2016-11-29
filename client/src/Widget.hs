@@ -10,7 +10,6 @@ import Control.Monad
 import Control.Lens
 import Control.Monad.IO.Class (liftIO)
 import Data.Monoid ((<>))
-import qualified Data.Map as M
 import JavaScript.JQuery (select, JQuery(..))
 import qualified Data.JSString as S
 import Data.Maybe
@@ -38,8 +37,8 @@ printOnChange prefix dyn = do
 topWidget :: MonadWidget t m => m ()
 topWidget =
     divClass "container" $
-        divClass "row" $
-            elAttr "form" ("class" =: "col s9") $ do
+        divClass "row" $ do
+            cards' <- elAttr "form" ("class" =: "col s9") $ do
                 nw <- nameWidget
                 dw <- descWidget
                 fw <- flavorWidget
@@ -68,7 +67,8 @@ topWidget =
                 -- debug ^^^^^^
 
                 ev <- getPostBuild
-                performArg (const $ material_select >> initialize_multiple_select) ev
+                performArg (const $ material_select
+                    >> initialize_multiple_select) ev
 
                 nF <- mapDyn nameRule nw
                 dF <- mapDyn descRule dw
@@ -85,13 +85,17 @@ topWidget =
 
                 allFilter <- sequenceDyn
                     [nF, dF, fF, sF, tF, rF, cF, ccF, caF, chF, aF, tF]
-                cards' <- mapDyn (\f -> applyAllFilter (concat f) cards) allFilter
+                mapDyn (\f -> applyAllFilter (concat f) cards) allFilter
 
-                let helper c = if length c > 5
-                                 then "too many cards"
-                                 else T.intercalate " | " $ c ^.. traverse . cardName
-                printOnChange "Avail" =<< mapDyn helper cards'
-                return ()
+            temp <- forDyn cards' $ map (T.unpack  . _cardName)
+            temp2 <- mapDyn (\ls -> zip ls (repeat "")) temp
+            temp3 <- mapDyn (\ls -> if length ls > 20
+                                      then []
+                                      else ls) temp2
+
+            w' <- mapDyn sideResultWidget temp3
+            divClass "col s3" $ dyn w'
+            return ()
 
 nameRule :: String -> [Filter]
 nameRule s = [nameFilter $ T.pack s]
@@ -263,6 +267,25 @@ checkboxWidget hdr strs =
         bs <- sequenceDyn dyns
         mapDyn (map snd . filter fst) bs
 
+mkWikiUrl :: T.Text -> String
+mkWikiUrl = (hearthstoneWikiUrl ++) . T.unpack
+
+hearthstoneWikiUrl :: String
+hearthstoneWikiUrl = "https://hearthstone.gamepedia.com/"
+
+-- a collection list in the right side
+sideResultWidget :: MonadWidget t m => [(String, String)] -> m ()
+sideResultWidget ns = do
+    divClass "pin-top" $
+       if null ns
+         then text "Too many cards to display"
+         else
+            divClass "collection" $
+                forM_ ns $ \(n, _) -> elAttr "a" ("class" =: "collection-item" <>
+                    "href" =: mkWikiUrl (T.pack n)) $ text n
+    ev <- getPostBuild
+    void $ performArg (const initialize_pintop) ev
+
 getValue :: String -> IO String
 getValue s = do
     jq <- select $ S.pack s
@@ -277,10 +300,11 @@ foreign import javascript unsafe "$('select').material_select();"
     material_select :: IO ()
 foreign import javascript unsafe "$('#cardset').on('change', function(e) { $('#cardset-ob').trigger('click'); }); $('#cardtype').on('change', function(e) { $('#cardtype-ob').trigger('click'); }); $('#cardrarity').on('change', function(e) { $('#cardrarity-ob').trigger('click'); }); $('#cardclass').on('change', function(e) { $('#cardclass-ob').trigger('click'); }); $('#cardsubtype').on('change', function(e) { $('#cardsubtype-ob').trigger('click'); });"
     initialize_multiple_select :: IO ()
+foreign import javascript unsafe "$('.pin-top').pushpin({ top:0 }); $('.scrollspy').scrollSpy();"
+    initialize_pintop :: IO ()
 
 getCardData :: IO [Card]
 getCardData = do
-    print "loaded"
     lbs <- U.fromString . S.unpack <$> _getCardData
     let Just cards = decode lbs
     return cards
