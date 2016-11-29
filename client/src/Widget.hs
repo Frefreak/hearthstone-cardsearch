@@ -19,8 +19,9 @@ import qualified Data.Text.IO as T
 import Data.Aeson
 import qualified Data.ByteString.Lazy.UTF8 as U
 import qualified Data.ByteString.Lazy.Char8 as LBS
+import qualified Data.Map as M
 
-import Card
+import Card hiding ((=:))
 import Filter
 
 
@@ -41,23 +42,56 @@ topWidget =
                 dw <- descWidget
                 fw <- flavorWidget
                 sw <- cardsetWidget
+                stw <- cardtypeWidget
+                rw <- cardrarityWidget
+                cw <- cardclassWidget
+                suw <- cardsubtypeWidget
+
+                -- debug VVVVVV
                 printOnChange "Card Name" nw
                 printOnChange "Card Description" dw
                 printOnChange "Card Flavor" fw
                 printOnChange "Card Set" sw
+                -- debug ^^^^^^
 
-                nF <- mapDyn (nameFilter . T.pack) nw
-                dF <- mapDyn (descFilter . T.pack) dw
-                fF <- mapDyn (flavorFilter . T.pack) fw
+                nF <- mapDyn nameRule nw
+                dF <- mapDyn descRule dw
+                fF <- mapDyn flavorRule fw
+                sF <- mapDyn cardsetRule sw
+                tF <- combineDyn cardtypeRule stw suw
+                rF <- mapDyn cardrarityRule rw
+                cF <- mapDyn cardclassRule cw
+
                 cards <- liftIO getCardData
-                allFilter <- sequenceDyn [nF, dF, fF]
-                cards' <- mapDyn (`applyAllFilter` cards) allFilter
+                allFilter <- sequenceDyn [nF, dF, fF, sF, tF, rF, cF]
+                cards' <- mapDyn (\f -> applyAllFilter (concat f) cards) allFilter
 
                 let helper c = if length c > 5
                                  then "too many cards"
                                  else T.intercalate " | " $ c ^.. traverse . cardName
                 printOnChange "Avail" =<< mapDyn helper cards'
                 return ()
+
+nameRule :: String -> [Filter]
+nameRule s = [nameFilter $ T.pack s]
+
+descRule :: String -> [Filter]
+descRule s = [descFilter $ T.pack s]
+
+flavorRule :: String -> [Filter]
+flavorRule s = [flavorFilter $ T.pack s]
+
+cardsetRule :: [CardSet] -> [Filter]
+cardsetRule cs = [cardsetFilter cs]
+
+cardtypeRule :: [CardType] -> [CardSubtype] -> [Filter]
+cardtypeRule ts ss = [typeFilter (CTMinion : ts), subtypeFilter ss]
+
+cardrarityRule :: [CardRarity] -> [Filter]
+cardrarityRule rs = [rarityFilter rs]
+
+cardclassRule :: [CardClass] -> [Filter]
+cardclassRule cs = [classFilter cs]
 
 sequenceDyn :: MonadWidget t m => [Dynamic t a] -> m (Dynamic t [a])
 sequenceDyn (a:as) = do
@@ -86,26 +120,66 @@ flavorWidget =
         elAttr "label" ("for" =: "cardflavor") (text "Card Flavor Text")
         return $ ti ^. textInput_value
 
-cardsetWidget :: MonadWidget t m => m (Dynamic t String)
-cardsetWidget =
-    divClass "input-field col s7" $ do
-        elAttr "select" ("multiple" =: "" <> "id" =: "cardset") $ do
-            elAttr "option" ("value" =: "" <> "disabled" =: "" <> "selected" =: "")
-                (text "None")
-            elAttr "option" ("value" =: "Karazhan")
-                (text "One Night in Karazhan")
-        (el, _) <- elAttr' "div" ("id" =: "cardset-ob") $ text ""
-        let ev = domEvent Click el
-        ev' <- performArg (const $ getValue "#cardset") ev
-        holdDyn "" ev'
+cardsetWidget :: MonadWidget t m => m (Dynamic t [CardSet])
+cardsetWidget = do
+    dyn <- divClass "input-field col s7" $ 
+        multipleSelectWidget "cardset" "Card Set" $ fmap show cardsetMap
+    mapDyn (map read . words) dyn
 
-getValue :: S.JSString -> IO String
+cardtypeWidget :: MonadWidget t m => m (Dynamic t [CardType])
+cardtypeWidget = do
+    dyn <- divClass "input-field col s4 offset-s1" $
+        multipleSelectWidget "cardtype" "Card Type" $ fmap show cardtypeMap
+    mapDyn (map read . words) dyn
+
+cardrarityWidget :: MonadWidget t m => m (Dynamic t [CardRarity])
+cardrarityWidget = do
+    dyn <- divClass "input-field col s3" $
+        multipleSelectWidget "cardrarity" "Card Rarity" $ fmap show cardrarityMap
+    mapDyn (map read . words) dyn
+
+cardclassWidget :: MonadWidget t m => m (Dynamic t [CardClass])
+cardclassWidget = do
+    dyn <- divClass "input-field col s3 offset-s1" $
+        multipleSelectWidget "cardclass" "Card Class" $ fmap show cardclassMap
+    mapDyn (map read . words) dyn
+
+cardsubtypeWidget :: MonadWidget t m => m (Dynamic t [CardSubtype])
+cardsubtypeWidget = do
+    dyn <- divClass "input-field col s4 offset-s1" $
+        multipleSelectWidget "cardsubtype" "Card Subtype (Assume Minion)"
+            $ fmap show cardsubtypeMap
+    mapDyn (map read . words) dyn
+
+nullAttr :: String -> M.Map String String
+nullAttr s = s =: ""
+
+nullAttrs :: [String] -> M.Map String String
+nullAttrs = foldr (\a b -> nullAttr a <> b) (M.fromList [])
+
+-- a commonly used widget (with materialize css framework)
+-- Map is of type `Map (shown text) (value text)`
+multipleSelectWidget :: MonadWidget t m => String -> String -> M.Map String String
+    -> m (Dynamic t String)
+multipleSelectWidget wid l opts = do
+    elAttr "select" ("multiple" =: "" <> "id" =: wid) $ do
+        elAttr "option" (nullAttrs ["value", "disabled", "selected"]) (text "None")
+        forM (M.keys opts) $ \k -> unless (null k) $
+            elAttr "option" ("value" =: (opts M.! k)) (text k)
+    el "label" $ text l
+    (el, _) <- elAttr' "div" ("id" =: (wid ++ "-ob") <> "style" =: "display:none;")
+        $ text "observer to track the value of multi-select using click event"
+    let ev = domEvent Click el
+    ev' <- performArg (const . getValue $ "#" ++ wid) ev
+    holdDyn "" ev'
+
+getValue :: String -> IO String
 getValue s = do
-    jq <- select s
+    jq <- select $ S.pack s
     jss <- getListOfString jq
     return $ S.unpack jss
 
-foreign import javascript unsafe "$1.val().join(',')"
+foreign import javascript unsafe "$1.val().join(' ')"
     getListOfString :: JQuery -> IO S.JSString
 foreign import javascript unsafe "$r = cards;"
     _getCardData :: IO S.JSString

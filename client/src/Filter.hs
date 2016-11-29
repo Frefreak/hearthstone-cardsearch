@@ -36,20 +36,28 @@ flavorFilter n = Filter $
 
 cardsetFilter :: [CardSet] -> Filter
 cardsetFilter s = Filter $
-    filter (\c -> c ^. cardSet `elem` s)
+    if null s
+      then id
+      else filter (\c -> c ^. cardSet `elem` s)
 
 typeFilter :: [CardType] -> Filter
 typeFilter t = Filter $
-    filter (\c -> c ^. cardType `elem` t)
+    if null t
+      then id
+      else filter (\c -> c ^. cardType `elem` t)
 
 subtypeFilter :: [CardSubtype] -> Filter
 subtypeFilter st = Filter $
-    filter (\c -> isJust (c ^. cardSubtype)
-                || fromJust (c ^. cardSubtype) `elem` st)
+    if null st
+      then id
+      else filter (\c -> isJust (c ^. cardSubtype) &&
+        fromJust (c ^. cardSubtype) `elem` st)
 
 rarityFilter :: [CardRarity] -> Filter
 rarityFilter r = Filter $
-    filter (\c -> c ^. cardRarity `elem` r)
+    if null r
+      then id
+      else filter (\c -> c ^. cardRarity `elem` r)
 
 costFilter :: (Int, Int) -> Filter
 costFilter (l, h) = Filter $
@@ -78,8 +86,9 @@ tagFilter t = Filter $
 
 classFilter :: [CardClass] -> Filter
 classFilter cc = Filter $
-    filter (\c -> let cla = c ^. cardClass
-                    in cla `elem` cc)
+    if null cc
+      then id
+      else filter (\c -> let cla = c ^. cardClass in cla `elem` cc)
 
 applyFilter :: Filter -> [Card] -> [Card]
 applyFilter (Filter f) = f
