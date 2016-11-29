@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Filter where
 
 import Data.Aeson
@@ -17,15 +18,21 @@ data Filter = Filter ([Card] -> [Card])
 
 nameFilter :: T.Text -> Filter
 nameFilter n = Filter $
-    filter (\c -> T.toLower n `T.isInfixOf` T.toLower (c ^. cardName))
+    case n of
+        "" -> id
+        n' -> filter (\c -> T.toLower n' `T.isInfixOf` T.toLower (c ^. cardName))
 
 descFilter :: T.Text -> Filter
 descFilter n = Filter $
-    filter (\c -> T.toLower n `T.isInfixOf` T.toLower (c ^. cardDesc))
+    case n of
+        "" -> id
+        n' -> filter (\c -> T.toLower n' `T.isInfixOf` T.toLower (c ^. cardDesc))
 
 flavorFilter :: T.Text -> Filter
 flavorFilter n = Filter $
-    filter (\c -> T.toLower n `T.isInfixOf` T.toLower (c ^. cardFlavor))
+    case n of
+        "" -> id
+        n' -> filter (\c -> T.toLower n' `T.isInfixOf` T.toLower (c ^. cardFlavor))
 
 cardsetFilter :: [CardSet] -> Filter
 cardsetFilter s = Filter $

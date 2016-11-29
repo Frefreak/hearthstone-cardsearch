@@ -1,20 +1,27 @@
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE RecursiveDo #-}
 {-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 module Widget where
 
 import Reflex.Dom hiding (select)
 import Data.Default
+import Control.Monad
 import Control.Lens
 import Control.Monad.IO.Class (liftIO)
 import Data.Monoid ((<>))
 import qualified Data.Map as M
-import JavaScript.JQuery hiding (Event)
+import JavaScript.JQuery (select, JQuery(..))
 import qualified Data.JSString as S
-import qualified GHCJS.DOM.Types as GDT
+import Data.Maybe
+import qualified Data.Text as T
+import qualified Data.Text.IO as T
+import Data.Aeson
+import qualified Data.ByteString.Lazy.UTF8 as U
+import qualified Data.ByteString.Lazy.Char8 as LBS
 
 import Card
+import Filter
 
 
 performArg :: MonadWidget t m => (b -> IO a) -> Event t b -> m (Event t a)
@@ -26,7 +33,7 @@ printOnChange prefix dyn = do
     return ()
 
 topWidget :: MonadWidget t m => m ()
-topWidget = do
+topWidget =
     divClass "container" $
         divClass "row" $
             elAttr "form" ("class" =: "col s9") $ do
@@ -39,24 +46,41 @@ topWidget = do
                 printOnChange "Card Flavor" fw
                 printOnChange "Card Set" sw
 
-    return ()
+                nF <- mapDyn (nameFilter . T.pack) nw
+                dF <- mapDyn (descFilter . T.pack) dw
+                fF <- mapDyn (flavorFilter . T.pack) fw
+                cards <- liftIO getCardData
+                allFilter <- sequenceDyn [nF, dF, fF]
+                cards' <- mapDyn (`applyAllFilter` cards) allFilter
+
+                let helper c = if length c > 5
+                                 then "too many cards"
+                                 else T.intercalate " | " $ c ^.. traverse . cardName
+                printOnChange "Avail" =<< mapDyn helper cards'
+                return ()
+
+sequenceDyn :: MonadWidget t m => [Dynamic t a] -> m (Dynamic t [a])
+sequenceDyn (a:as) = do
+    ras <- sequenceDyn as
+    combineDyn (:) a ras
+sequenceDyn [] = return $ constDyn []
 
 nameWidget :: MonadWidget t m => m (Dynamic t String)
-nameWidget = do
+nameWidget =
     divClass "input-field col s4" $ do
         ti <- textInput $ def & textInputConfig_attributes .~ constDyn ("id" =: "cardname")
         elAttr "label" ("for" =: "cardname") (text "Card Name")
         return $ ti ^. textInput_value
 
 descWidget :: MonadWidget t m => m (Dynamic t String)
-descWidget = do
+descWidget =
     divClass "input-field col s4" $ do
         ti <- textInput $ def & textInputConfig_attributes .~ constDyn ("id" =: "carddesc")
         elAttr "label" ("for" =: "carddesc") (text "Card Description")
         return $ ti ^. textInput_value
 
 flavorWidget :: MonadWidget t m => m (Dynamic t String)
-flavorWidget = do
+flavorWidget =
     divClass "input-field col s4" $ do
         ti <- textInput $ def & textInputConfig_attributes .~ constDyn ("id" =: "cardflavor")
         elAttr "label" ("for" =: "cardflavor") (text "Card Flavor Text")
@@ -83,3 +107,13 @@ getValue s = do
 
 foreign import javascript unsafe "$1.val().join(',')"
     getListOfString :: JQuery -> IO S.JSString
+foreign import javascript unsafe "$r = cards;"
+    _getCardData :: IO S.JSString
+
+getCardData :: IO [Card]
+getCardData = do
+    print "loaded"
+    lbs <- U.fromString . S.unpack <$> _getCardData
+    let Just cards = decode lbs
+    return cards
+
