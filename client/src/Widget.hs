@@ -8,9 +8,10 @@ import Reflex.Dom hiding (select)
 import Data.Default
 import Control.Monad
 import Control.Lens
+import Data.List (nub)
 import Control.Monad.IO.Class (liftIO)
 import Data.Monoid ((<>))
-import JavaScript.JQuery (select, JQuery(..))
+import JavaScript.JQuery (select, setCss, JQuery(..))
 import qualified Data.JSString as S
 import Data.Maybe
 import qualified Data.Text as T
@@ -21,6 +22,7 @@ import qualified Data.ByteString.Lazy.Char8 as LBS
 import qualified Data.Map as M
 import qualified Data.Set as S
 import Safe
+import Data.Hashable
 
 import Card hiding ((=:))
 import Filter
@@ -29,10 +31,8 @@ import Filter
 performArg :: MonadWidget t m => (b -> IO a) -> Event t b -> m (Event t a)
 performArg f x = performEvent (fmap (liftIO . f) x)
 
-printOnChange :: (MonadWidget t m, Show a) => String -> Dynamic t a -> m ()
-printOnChange prefix dyn = do
-    performArg (\s -> putStrLn (prefix ++ ": " ++ show s)) (updated dyn)
-    return ()
+performArg' :: MonadWidget t m => Event t b -> (b -> IO a) -> m (Event t a)
+performArg' f x = performArg x f
 
 topWidget :: MonadWidget t m => m ()
 topWidget =
@@ -59,13 +59,6 @@ topWidget =
                 aw <- abiWidget . S.toList $ S.unions abis
                 tw <- tagWidget . S.toList $ S.unions tags
 
-                -- debug VVVVVV
-                printOnChange "Card Name" nw
-                printOnChange "Card Description" dw
-                printOnChange "Card Flavor" fw
-                printOnChange "Card Set" sw
-                -- debug ^^^^^^
-
                 ev <- getPostBuild
                 performArg (const $ material_select
                     >> initialize_multiple_select) ev
@@ -81,21 +74,26 @@ topWidget =
                 caF <- mapDyn cardatkRule caw
                 chF <- mapDyn cardhpRule chw
                 aF <- mapDyn abiRule aw
-                tF <- mapDyn tagRule tw
+                tagF <- mapDyn tagRule tw
 
                 allFilter <- sequenceDyn
-                    [nF, dF, fF, sF, tF, rF, cF, ccF, caF, chF, aF, tF]
+                    [nF, dF, fF, sF, tF, rF, cF, ccF, caF, chF, aF, tagF]
                 mapDyn (\f -> applyAllFilter (concat f) cards) allFilter
 
+            images <- liftIO getCardImage
             temp <- forDyn cards' $ map (T.unpack  . _cardName)
-            temp2 <- mapDyn (\ls -> zip ls (repeat "")) temp
-            temp3 <- mapDyn (\ls -> if length ls > 20
-                                      then []
-                                      else ls) temp2
+            temp2 <- mapDyn (\ls -> zip ls $ extractImages images ls) temp
 
-            w' <- mapDyn sideResultWidget temp3
+            w' <- mapDyn sideResultWidget temp2
             divClass "col s3" $ dyn w'
             return ()
+
+extractImages :: [Image] -> [String] -> [String]
+extractImages imgs = map $ \n -> case lookup (T.pack n) imgs of
+                                    Just url -> if null url
+                                                  then ""
+                                                  else T.unpack $ head url
+                                    Nothing -> ""
 
 nameRule :: String -> [Filter]
 nameRule s = [nameFilter $ T.pack s]
@@ -110,7 +108,9 @@ cardsetRule :: [CardSet] -> [Filter]
 cardsetRule cs = [cardsetFilter cs]
 
 cardtypeRule :: [CardType] -> [CardSubtype] -> [Filter]
-cardtypeRule ts ss = [typeFilter (CTMinion : ts), subtypeFilter ss]
+cardtypeRule ts ss = if null ss
+                       then [typeFilter ts]
+                       else [typeFilter (nub $ CTMinion : ts), subtypeFilter ss]
 
 cardrarityRule :: [CardRarity] -> [Filter]
 cardrarityRule rs = [rarityFilter rs]
@@ -208,12 +208,12 @@ cardhpWidget =
 
 abiWidget :: MonadWidget t m => [Mechanic] -> m (Dynamic t [Mechanic])
 abiWidget ms = do
-    w <- checkboxWidget "Abilities" $ map (\(Mechanic s) -> T.unpack s) ms
+    w <- checkboxWidget "Abilities" (map (\(Mechanic s) -> T.unpack s) ms) "Abi"
     mapDyn (map $ Mechanic . T.pack) w
 
 tagWidget :: MonadWidget t m => [Tag] -> m (Dynamic t [Tag])
 tagWidget ms = do
-    w <- checkboxWidget "Tags" $ map (\(Tag s) -> T.unpack s) ms
+    w <- checkboxWidget "Tags" (map (\(Tag s) -> T.unpack s) ms) "Tag"
     mapDyn (map $ Tag . T.pack) w
 
 nullAttr :: String -> M.Map String String
@@ -254,15 +254,17 @@ rangeWidget n = do
     combineDyn (\a b -> (readDef 0 a, readDef 999 b)) mi ma
 
 -- widget used to render abilities and tags filter
-checkboxWidget :: MonadWidget t m => String -> [String] -> m (Dynamic t [String])
-checkboxWidget hdr strs =
+checkboxWidget :: MonadWidget t m => String -> [String] -> String ->
+    m (Dynamic t [String])
+checkboxWidget hdr strs prefix =
     divClass "input-field col s12" $ do
         elAttr "p" ("class" =: "grey-text") $ text hdr
         dyns <- forM strs $ \s ->
             divClass "col l3 s4" $ do
+                let n = prefix ++ " " ++ s
                 cb <- checkbox False
-                    (def & checkboxConfig_attributes .~ constDyn ("id" =: s))
-                elAttr "label" ("for" =: s) $ text s
+                    (def & checkboxConfig_attributes .~ constDyn ("id" =: n))
+                elAttr "label" ("for" =: n) $ text s
                 combineDyn (,) (cb ^. checkbox_value) (constDyn s)
         bs <- sequenceDyn dyns
         mapDyn (map snd . filter fst) bs
@@ -276,15 +278,28 @@ hearthstoneWikiUrl = "https://hearthstone.gamepedia.com/"
 -- a collection list in the right side
 sideResultWidget :: MonadWidget t m => [(String, String)] -> m ()
 sideResultWidget ns = do
+    let mkID = ("result-" ++) . hash'
     divClass "pin-top" $
-       if null ns
-         then text "Too many cards to display"
+       if length ns > 15
+         then text $ "Too many cards to display (" ++ show (length ns) ++ ")"
          else
-            divClass "collection" $
-                forM_ ns $ \(n, _) -> elAttr "a" ("class" =: "collection-item" <>
-                    "href" =: mkWikiUrl (T.pack n)) $ text n
+            if null ns
+              then text "No cards meet requirements"
+              else
+                divClass "collection" $
+                    forM_ ns $ \(n, _) ->
+                        elAttr "a" ("class" =: "collection-item tooltipped" <>
+                                    "href" =: mkWikiUrl (T.pack n) <>
+                                    "target" =: "_blank" <>
+                                    "id" =: mkID n) $ text n
     ev <- getPostBuild
-    void $ performArg (const initialize_pintop) ev
+    void $ performArg (const $ initialize_pintop
+                    >> forM_ ns (\(n, url) ->
+                        initialize_tooltip (S.pack $ "#" ++ mkID n) (S.pack url))) ev
+
+
+hash' :: String -> String
+hash' = show . hash
 
 getValue :: String -> IO String
 getValue s = do
@@ -296,12 +311,15 @@ foreign import javascript unsafe "$1.val().join(' ')"
     getListOfString :: JQuery -> IO S.JSString
 foreign import javascript unsafe "$r = cards;"
     _getCardData :: IO S.JSString
+foreign import javascript unsafe "$r = images;"
+    _getCardImage :: IO S.JSString
 foreign import javascript unsafe "$('select').material_select();"
     material_select :: IO ()
-foreign import javascript unsafe "$('#cardset').on('change', function(e) { $('#cardset-ob').trigger('click'); }); $('#cardtype').on('change', function(e) { $('#cardtype-ob').trigger('click'); }); $('#cardrarity').on('change', function(e) { $('#cardrarity-ob').trigger('click'); }); $('#cardclass').on('change', function(e) { $('#cardclass-ob').trigger('click'); }); $('#cardsubtype').on('change', function(e) { $('#cardsubtype-ob').trigger('click'); });"
-    initialize_multiple_select :: IO ()
-foreign import javascript unsafe "$('.pin-top').pushpin({ top:0 }); $('.scrollspy').scrollSpy();"
+foreign import javascript unsafe "$('#cardset').on('change',function(e){ $('#cardset-ob').trigger('click'); }); $('#cardtype').on('change',function(e){ $('#cardtype-ob').trigger('click'); }); $('#cardrarity').on('change',function(e){ $('#cardrarity-ob').trigger('click'); }); $('#cardclass').on('change',function(e){ $('#cardclass-ob').trigger('click'); }); $('#cardsubtype').on('change',function(e){ $('#cardsubtype-ob').trigger('click'); });" initialize_multiple_select :: IO ()
+foreign import javascript unsafe "$('.pin-top').pushpin({ top:0 });$('.scrollspy').scrollSpy();"
     initialize_pintop :: IO ()
+foreign import javascript unsafe "$($1).tooltip({delay: 50,tooltip:'<img src='+$2+'></img>',html:true});"
+    initialize_tooltip :: S.JSString -> S.JSString -> IO ()
 
 getCardData :: IO [Card]
 getCardData = do
@@ -309,3 +327,8 @@ getCardData = do
     let Just cards = decode lbs
     return cards
 
+getCardImage :: IO [Image]
+getCardImage = do
+    lbs <- U.fromString . S.unpack <$> _getCardImage
+    let Just images = decode lbs
+    return images

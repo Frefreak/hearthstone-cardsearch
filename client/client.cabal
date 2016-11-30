@@ -33,6 +33,7 @@ library
                      , ghcjs-dom
                      , utf8-string
                      , safe
+                     , hashable
   default-language:    Haskell2010
 
 executable client

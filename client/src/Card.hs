@@ -162,10 +162,7 @@ data Card = Card {
   } deriving (Show, Generic)
 makeLenses ''Card
 
-data Image = Image {
-    _iname :: T.Text
-  , _iurl :: [T.Text]
-  } deriving (Show, Generic)
+type Image = (T.Text, [T.Text])
 
 instance ToJSON Card
 instance ToJSON CardClass
@@ -178,7 +175,6 @@ instance ToJSON CardSubtype
 instance ToJSON CardType
 instance ToJSON CardSet
 instance ToJSON Mechanic
-instance ToJSON Image
 
 instance FromJSON Card
 instance FromJSON CardClass
@@ -191,7 +187,6 @@ instance FromJSON CardSubtype
 instance FromJSON CardType
 instance FromJSON CardSet
 instance FromJSON Mechanic
-instance FromJSON Image
 
 instance NFData Card
 instance NFData CardClass
@@ -204,4 +199,3 @@ instance NFData CardSubtype
 instance NFData CardType
 instance NFData CardSet
 instance NFData Mechanic
-instance NFData Image

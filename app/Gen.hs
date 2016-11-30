@@ -14,13 +14,15 @@ main = do
     hSetBuffering stdout NoBuffering
     putStrLn "getting card name list from HearthStone API"
     tid <- forkIO $ forever (putStr "." >> threadDelay 1000000)
-    cardlist <- allCardListLocal
+    cardlist <- allCardList
     killThread tid
     putStrLn "\nDone"
     cardData <- getAllCards $ nub cardlist
     let (cards, imgs) = processCardData cardData
-        lbs = encode cards
-    LBS.writeFile "card-data.json" lbs
+        cards' = encode cards
+        imgs' = encode imgs
+    LBS.writeFile "card-data.json" cards'
+    LBS.writeFile "card-image.json" imgs'
     hSetBuffering stdout LineBuffering
 
 

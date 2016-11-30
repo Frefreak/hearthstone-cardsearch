@@ -70,7 +70,7 @@ getAllCards cl = do
 processCardData :: [([T.Text], Card)] -> ([Card], [Image])
 processCardData cs =
     let tups = map (fst &&& snd) cs
-        tups' = map (\(url, c) -> (c, Image (c ^. cardName) url)) tups
+        tups' = map (\(url, c) -> (c, (c ^. cardName, url))) tups
     in (map fst tups', map snd tups')
 
 reportProgress :: MVar Int -> Int -> IO ()
