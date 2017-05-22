@@ -26,9 +26,10 @@ data CardSet = Classic | Basic
         | GoblinsVsGnomes | TheGrandTournament
         | WhispersOfTheOldGods | MeanStreetsOfGadgetzan
         | CurseOfNaxxramas | BlackrockMountain | TheLeagueOfExplorers
-        | OneNightInKarazhan
+        | OneNightInKarazhan | JourneyToUnGoro
         -- These are special set
-        | Credits | TavernBrawl | Cheat | Tutorial | Promo | Unknown | Reward
+        | Credits | TavernBrawl | Cheat | Tutorial | Promo | Unknown
+        | Reward | HallOfFame
     deriving (Show, Eq, Read, Generic)
 
 cardsetMap :: M.Map String CardSet
@@ -38,11 +39,12 @@ cardsetMap =
     <>  "Goblins vs Gnomes" =: GoblinsVsGnomes
     <>  "The Grand Tournament" =: TheGrandTournament
     <>  "Whispers of the Old Gods" =: WhispersOfTheOldGods
-    <>  "Mean Streets Of Gadgetzan" =: MeanStreetsOfGadgetzan
+    <>  "Mean Streets of Gadgetzan" =: MeanStreetsOfGadgetzan
     <>  "Naxxramas" =: CurseOfNaxxramas
     <>  "Blackrock Mountain" =: BlackrockMountain
     <>  "The League of Explorers" =: TheLeagueOfExplorers
     <>  "One Night in Karazhan" =: OneNightInKarazhan
+    <>  "Journey to Un'Goro" =: JourneyToUnGoro
     <>  "CREDITS" =: Credits
     <>  "Tavern Brawl" =: TavernBrawl
     <>  "Cheat" =: Cheat
@@ -50,6 +52,7 @@ cardsetMap =
     <>  "Promo" =: Promo
     <>  "Unknown" =: Unknown
     <>  "Reward" =: Reward
+    <>  "Hall of Fame" =: HallOfFame
 
 text2CardSet :: T.Text -> CardSet
 text2CardSet t = cardsetMap M.! T.unpack t
@@ -72,7 +75,7 @@ cardtypeMap =
 text2CardType :: T.Text -> CardType
 text2CardType t = cardtypeMap M.! T.unpack t
 
-data CardSubtype = Beast | Demon | Dragon | Murloc | Pirate | Totem | Mech | General
+data CardSubtype = Beast | Demon | Dragon | Murloc | Pirate | Totem | Mech | Element | General
     deriving (Show, Eq, Read, Generic)
 
 cardsubtypeMap :: M.Map String CardSubtype
@@ -83,7 +86,8 @@ cardsubtypeMap =
     <>  "Murloc" =: Murloc
     <>  "Pirate" =: Pirate
     <>  "Totem" =: Totem
-    <>  "Mech" =: Totem
+    <>  "Mech" =: Mech
+    <>  "Elemental" =: Element
     <>  "General" =: General -- this is only needed for generating html element
     <>  "" =: General
 
@@ -125,7 +129,8 @@ text2Tag :: T.Text -> Tag
 text2Tag = Tag
 
 data CardClass = Druid | Hunter | Mage | Paladin | Priest | Rogue | Shaman
-               | Warlock | Warrior | Neutral
+               | Warlock | Warrior | Kabal | JadeLotus | GrimyGoons
+               | Neutral
                deriving (Show, Eq, Read, Generic)
 
 cardclassMap :: M.Map String CardClass
@@ -140,6 +145,10 @@ cardclassMap =
     <>  "Warlock" =: Warlock
     <>  "Warrior" =: Warrior
     <>  "Neutral" =: Neutral
+    <>  "MagePriestWarlock" =: Kabal
+    <>  "DruidRogueShaman" =: JadeLotus
+    <>  "HunterWarriorPaladin" =: GrimyGoons
+    <>  "HunterPaladinWarrior" =: GrimyGoons
     <>  "" =: Neutral
 
 text2CardClass :: T.Text -> CardClass
