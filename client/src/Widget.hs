@@ -181,7 +181,8 @@ cardrarityWidget = do
 cardclassWidget :: MonadWidget t m => m (Dynamic t [CardClass])
 cardclassWidget = do
     dyn <- divClass "input-field col s3 offset-s1" $
-        multipleSelectWidget "cardclass" "Card Class" $ fmap show cardclassMap
+        multipleSelectWidget "cardclass" "Card Class" $
+            let es = map show (M.elems cardclassMap) in M.fromList $ zip es es
     mapDyn (map read . words) dyn
 
 cardsubtypeWidget :: MonadWidget t m => m (Dynamic t [CardSubtype])

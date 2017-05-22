@@ -49,6 +49,9 @@ getCard name cnt = do
     let handler (e :: SomeException) = return . Left $ name <> ": " <> T.pack (take 100 $ show e)
     strictCatch (Right <$> parseLBSCard name) handler
 
+getCard' :: T.Text -> IO (Either T.Text ([T.Text], Card))
+getCard' t = newMVar 0 >>= getCard t
+
 getAllCards :: [T.Text] -> IO [([T.Text], Card)]
 getAllCards cl = do
     let tot = length cl
