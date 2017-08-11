@@ -3,6 +3,7 @@
 -- parse HTML from gamepedia to Card type
 module Parser where
 
+import Data.String (fromString)
 import Text.XML.Cursor
 import Text.HTML.DOM
 import Prelude hiding (readFile)
@@ -11,7 +12,7 @@ import qualified Data.Text.IO as T
 import Data.Monoid ((<>))
 import Text.XML (Node(..))
 import qualified Data.Set as S
-import Network.Wreq
+import Network.HTTP.Simple
 import Control.Lens.Operators
 import System.Timeout
 import Control.Exception
@@ -101,7 +102,7 @@ recursiveGet act = do
 
 parseLBSCard :: T.Text -> IO ([T.Text], Card)
 parseLBSCard s = do
-    r <- recursiveGet (get $ mkWikiUrl s)
-    let lbs = r ^. responseBody
+    r <- recursiveGet (httpLbs . fromString $ mkWikiUrl s)
+    let lbs = getResponseBody r
         cur = fromDocument . parseLBS $ lbs
     return $ parseCard cur

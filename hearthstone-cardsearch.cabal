@@ -24,10 +24,9 @@ library
                      , containers
                      , html-conduit
                      , xml-conduit
-                     , wreq
+                     , http-conduit
                      , lens-aeson
-                     , async
-                     , SafeSemaphore
+                     , async-extra
                      , aeson
                      , bytestring
                      , deepseq

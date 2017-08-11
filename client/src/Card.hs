@@ -26,7 +26,7 @@ data CardSet = Classic | Basic
         | GoblinsVsGnomes | TheGrandTournament
         | WhispersOfTheOldGods | MeanStreetsOfGadgetzan
         | CurseOfNaxxramas | BlackrockMountain | TheLeagueOfExplorers
-        | OneNightInKarazhan | JourneyToUnGoro
+        | OneNightInKarazhan | JourneyToUnGoro | KnightsOfTheFrozenThrone
         -- These are special set
         | Credits | TavernBrawl | Cheat | Tutorial | Promo | Unknown
         | Reward | HallOfFame
@@ -45,6 +45,7 @@ cardsetMap =
     <>  "The League of Explorers" =: TheLeagueOfExplorers
     <>  "One Night in Karazhan" =: OneNightInKarazhan
     <>  "Journey to Un'Goro" =: JourneyToUnGoro
+    <>  "Knights of the Frozen Throne" =: KnightsOfTheFrozenThrone
     <>  "CREDITS" =: Credits
     <>  "Tavern Brawl" =: TavernBrawl
     <>  "Cheat" =: Cheat
